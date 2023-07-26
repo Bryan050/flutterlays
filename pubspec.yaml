@@ -35,6 +35,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  geolocator: ^8.2.0
+  geocoding: ^2.0.4
   mapsforge_flutter: ^2.0.2
   leak_tracker: ^1.0.0-dev.1.6
   archive: ^3.3.7

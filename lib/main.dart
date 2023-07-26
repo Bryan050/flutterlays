@@ -32,7 +32,7 @@ final List<MapFileData> MAP_FILE_DATA_LIST = [
     initialPositionLong: -78.61905,
     initialZoomLevel: 18,
     indoorZoomOverlay: true,
-    indoorLevels: {1: 'OG', 0: 'EG', -1: 'UG'},
+    indoorLevels: {0: 'EG'},
   ),
   /* const MapFileData(
     url: "https://dailyflightbuddy.com/mapsforge_examples/Louvre.map",

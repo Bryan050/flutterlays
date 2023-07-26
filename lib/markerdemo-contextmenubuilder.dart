@@ -64,6 +64,7 @@ class _MarkerdemoContextMenuState extends DefaultContextMenuState {
       },
       child: const Text("New marker"),
     ));
+
     widget.mapModel.markerDataStores.forEach((markerDataStore) {
       markerDataStore.isTapped(widget.event).forEach((marker) {
         result.add(TextButton(

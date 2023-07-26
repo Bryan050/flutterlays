@@ -168,26 +168,39 @@ class MapViewPageState2 extends State<MapViewPage2> {
     // mapModel.markerDataStores.add(
     //     DebugDatastore(symbolCache: symbolCache, displayModel: displayModel));
     loadCoordinates(mapModel);
+
+    markerdemoDatastore.addMarker(CircleMarker(
+      center: LatLong(widget.mapFileData.initialPositionLat,
+          widget.mapFileData.initialPositionLong),
+      radius: 15,
+      strokeWidth: 2,
+      fillColor: 0xff0000ff,
+      strokeColor: 0xff000000,
+      displayModel: displayModel,
+    ));
+    mapModel.markerDataStores.add(markerdemoDatastore);
     return mapModel;
   }
 
   void loadCoordinates(MapModel mapModel) {
-    var coordinates = {
+    var albergues = {
       LatLong(-0.995454, -78.584748),
       LatLong(-0.995399, -78.586121),
       LatLong(-0.989938, -78.587724),
       LatLong(-1.009205, -78.583218),
       LatLong(-1.003849, -78.595021),
+    };
+
+    var sitiosSeguros = {
       LatLong(-1.004669, -78.576031),
       LatLong(-0.988080, -78.562158),
       LatLong(-0.983243, -78.566101),
       LatLong(-0.976931, -78.583141),
       LatLong(-1.003781, -78.558963)
     };
-
-    for (var coordinate in coordinates) {
-      debugPrint(coordinate.toString());
-      markerdemoDatastore.addMarker(CircleMarker(
+    for (var coordinate in albergues) {
+      MarkerDataStore markerDataStore = MarkerDataStore();
+      markerDataStore.addMarker(CircleMarker(
         center: coordinate,
         radius: 15,
         strokeWidth: 2,
@@ -195,7 +208,20 @@ class MapViewPageState2 extends State<MapViewPage2> {
         strokeColor: 0xff000000,
         displayModel: displayModel,
       ));
-      mapModel.markerDataStores.add(markerdemoDatastore);
+      mapModel.markerDataStores.add(markerDataStore);
+    }
+
+    for (var coordinate in sitiosSeguros) {
+      MarkerDataStore markerDataStore = MarkerDataStore();
+      markerDataStore.addMarker(CircleMarker(
+        center: coordinate,
+        radius: 15,
+        strokeWidth: 2,
+        fillColor: 0xff008f39,
+        strokeColor: 0xff000000,
+        displayModel: displayModel,
+      ));
+      mapModel.markerDataStores.add(markerDataStore);
     }
   }
 
