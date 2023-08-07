@@ -10,6 +10,7 @@ import 'package:lays/map-view-page2.dart';
 import 'package:lays/pathhandler.dart';
 import 'package:mapsforge_flutter/maps.dart';
 
+import 'location_page.dart';
 import 'map-file-data.dart';
 
 /// The [StatefulWidget] which downloads the mapfile.
@@ -137,6 +138,7 @@ class MapDownloadPageState extends State<MapDownloadPage> {
       MaterialPageRoute(
         builder: (BuildContext context) =>
             MapViewPage2(mapFileData: widget.mapFileData, mapFile: mapFile),
+        //LocationPage(),
       ),
     );
     mapFile.dispose();

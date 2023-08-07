@@ -1,15 +1,20 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lays/markerdemo-contextmenubuilder.dart';
 import 'package:lays/markerdemo-datastore.dart';
+import 'package:location/location.dart';
 //import 'package:lays/rotation-overlay.dart';
 import 'package:mapsforge_flutter/core.dart';
 import 'package:mapsforge_flutter/datastore.dart';
 import 'package:mapsforge_flutter/maps.dart';
 import 'package:mapsforge_flutter/marker.dart';
+import 'package:provider/provider.dart';
+import 'package:geolocator/geolocator.dart';
 
+import 'location_service.dart';
 import 'map-file-data.dart';
 
 /// The [StatefulWidget] displaying the interactive map page. This is a demo
@@ -25,22 +30,80 @@ class MapViewPage2 extends StatefulWidget {
       : super(key: key);
 
   @override
-  MapViewPageState2 createState() => MapViewPageState2();
+  MapViewPageState createState() => MapViewPageState(
+        mapFileData: mapFileData,
+        mapFile: mapFile,
+      );
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
+class MapViewPageState extends State<MapViewPage2> {
+  final MapFileData mapFileData;
+
+  final MapDataStore? mapFile;
+
+  MapViewPageState(
+      {Key? key, required this.mapFileData, required this.mapFile});
+
+  @override
+  Widget build(BuildContext context) {
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => LocationProvider(),
+          child: MapViewPageHome(mapFileData: mapFileData, mapFile: mapFile),
+        )
+      ],
+      child: MaterialApp(
+          title: 'Flutter Demo',
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+          ),
+          home: MapViewPageHome(mapFileData: mapFileData, mapFile: mapFile)),
+    );
+  }
+}
+
+class MapViewPageHome extends StatefulWidget {
+  final MapFileData mapFileData;
+
+  final MapDataStore? mapFile;
+
+  const MapViewPageHome(
+      {Key? key, required this.mapFileData, required this.mapFile})
+      : super(key: key);
+
+  @override
+  MapViewPageState2 createState() => MapViewPageState2();
+}
+
 /// The [State] of the [MapViewPage] Widget.
-class MapViewPageState2 extends State<MapViewPage2> {
+class MapViewPageState2 extends State<MapViewPageHome> {
   final DisplayModel displayModel = DisplayModel(deviceScaleFactor: 1);
 
   late SymbolCache symbolCache;
 
   late MarkerdemoDatastore markerdemoDatastore;
+  late LatLong currentLocation;
+  LatLong? nearestPoint;
+  late CircleMarker userMarker;
+  late double distanceToNearesPoint;
 
   @override
   void initState() {
     super.initState();
+    Provider.of<LocationProvider>(context, listen: false).initalization();
+    userMarker = CircleMarker(
+      center: LatLong(widget.mapFileData.initialPositionLat,
+          widget.mapFileData.initialPositionLong),
+      radius: 15,
+      strokeWidth: 2,
+      fillColor: 0xff0000ff,
+      strokeColor: 0xff000000,
+      displayModel: displayModel,
+    );
+    distanceToNearesPoint = -1;
 
     /// For the offline-maps we need a cache for all the tiny symbols in the map
     symbolCache = widget.mapFileData.relativePathPrefix != null
@@ -75,17 +138,49 @@ class MapViewPageState2 extends State<MapViewPage2> {
 
   /// Constructs the body ([FlutterMapView]) of the [MapViewPage].
   Widget _buildMapViewBody(BuildContext context) {
-    return MapviewWidget(
-        displayModel: displayModel,
-        createMapModel: () async {
-          /// instantiate the job renderer. This renderer is the core of the system and retrieves or renders the tile-bitmaps
-          return widget.mapFileData.mapType == MAPTYPE.OFFLINE
-              ? await _createOfflineMapModel()
-              : await _createOnlineMapModel();
-        },
-        createViewModel: () async {
-          return _createViewModel();
-        });
+    return Consumer<LocationProvider>(builder: (
+      consumerContext,
+      model,
+      child,
+    ) {
+      if (model.locationPosition != null) {
+        //print("USER CURRENT LOCATION " + model.locationPosition.toString());
+        currentLocation = model.locationPosition;
+        userMarker.latLong = currentLocation;
+        if (distanceToNearesPoint != -1) {
+          var currentDistance = getDistance(nearestPoint!, currentLocation);
+          print(distanceToNearesPoint);
+          print(currentDistance);
+
+          if (distanceToNearesPoint > currentDistance) {
+            userMarker.setMarkerCaption(MarkerCaption(
+                text: "Te estas acercando a tu destino",
+                displayModel: displayModel));
+          } else {
+            userMarker.setMarkerCaption(MarkerCaption(
+                text: "Te estas alejando a tu destino",
+                displayModel: displayModel));
+          }
+        }
+        return MapviewWidget(
+            displayModel: displayModel,
+            createMapModel: () async {
+              /// instantiate the job renderer. This renderer is the core of the system and retrieves or renders the tile-bitmaps
+              return widget.mapFileData.mapType == MAPTYPE.OFFLINE
+                  ? await _createOfflineMapModel()
+                  : await _createOnlineMapModel();
+            },
+            createViewModel: () async {
+              //print("CREATE VIEW MODEL");
+              return _createViewModel();
+            });
+      }
+      return Center(
+        child: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    });
   }
 
   ViewModel _createViewModel() {
@@ -104,11 +199,12 @@ class MapViewPageState2 extends State<MapViewPage2> {
       viewModel.addOverlay(ZoomOverlay(viewModel));
     viewModel.addOverlay(DistanceOverlay(viewModel));
     //viewModel.addOverlay(DemoOverlay(viewModel: viewModel));
-
     // set default position
-    viewModel.setMapViewPosition(widget.mapFileData.initialPositionLat,
-        widget.mapFileData.initialPositionLong);
-    viewModel.setZoomLevel(widget.mapFileData.initialZoomLevel);
+    if (currentLocation != null) {
+      viewModel.setMapViewPosition(
+          currentLocation.latitude, currentLocation.longitude);
+      viewModel.setZoomLevel(widget.mapFileData.initialZoomLevel);
+    }
     viewModel.observeMoveAroundStart.listen((event) {
       // Demo: If the user tries to move around a marker
       markerdemoDatastore.moveMarkerStart(event);
@@ -119,7 +215,8 @@ class MapViewPageState2 extends State<MapViewPage2> {
     });
     viewModel.observeMoveAroundUpdate.listen((event) {
       // Demo: If the user tries to move around a marker
-      markerdemoDatastore.moveMarkerUpdate(event);
+      markerdemoDatastore
+          .moveMarkerUpdate(LatLong(event.latitude, event.longitude));
     });
     viewModel.observeMoveAroundEnd.listen((event) {
       // Demo: If the user tries to move around a marker
@@ -169,17 +266,90 @@ class MapViewPageState2 extends State<MapViewPage2> {
     //     DebugDatastore(symbolCache: symbolCache, displayModel: displayModel));
     loadCoordinates(mapModel);
 
-    markerdemoDatastore.addMarker(CircleMarker(
-      center: LatLong(widget.mapFileData.initialPositionLat,
-          widget.mapFileData.initialPositionLong),
-      radius: 15,
-      strokeWidth: 2,
-      fillColor: 0xff0000ff,
-      strokeColor: 0xff000000,
-      displayModel: displayModel,
-    ));
+    userMarker.latLong = currentLocation;
+    if (currentLocation != null) {
+      nearestPoint = getNearedPoint();
+      MarkerDataStore markerDataStore = MarkerDataStore();
+      markerDataStore.addMarker(CircleMarker(
+          center: nearestPoint!,
+          radius: 10,
+          strokeWidth: 2,
+          fillColor: 0xff000000,
+          strokeColor: 0xff000000,
+          displayModel: displayModel));
+      mapModel.markerDataStores.add(markerDataStore);
+    }
+    distanceToNearesPoint = getDistance(nearestPoint!, currentLocation);
+    //print("INITIAL DISTANCE: " + distanceToNearesPoint.toString());
+    userMarker.setMarkerCaption(MarkerCaption(
+        text: "Distancia total: " + distanceToNearesPoint.toString(),
+        displayModel: displayModel));
+
+    markerdemoDatastore.addMarker(userMarker);
     mapModel.markerDataStores.add(markerdemoDatastore);
+
     return mapModel;
+  }
+
+  //Calculating the distance between two points with Geolocator plugin
+  getDistance(LatLong point1, LatLong point2) {
+    final double distance = Geolocator.distanceBetween(
+        point1.latitude, point1.longitude, point2.latitude, point2.longitude);
+    return distance;
+  }
+
+  getNearedPoint() {
+    var alberguesDistance = [];
+    var sitiosSegurosDistance = [];
+    var distanceToDestination;
+    var minIndexAlberguesDistance;
+    var minIndexSitioSeguroDistance;
+    var minAlbergueLatLong;
+    var minSitioSeguroLatLong;
+
+    var albergues = {
+      LatLong(-0.995454, -78.584748),
+      LatLong(-0.995399, -78.586121),
+      LatLong(-0.989938, -78.587724),
+      LatLong(-1.009205, -78.583218),
+      LatLong(-1.003849, -78.595021),
+    };
+
+    var sitiosSeguros = {
+      LatLong(-1.004669, -78.576031),
+      LatLong(-0.988080, -78.562158),
+      LatLong(-0.983243, -78.566101),
+      LatLong(-0.976931, -78.583141),
+      LatLong(-1.003781, -78.558963)
+    };
+    for (var coordinate in albergues) {
+      alberguesDistance.add(getDistance(currentLocation, coordinate));
+    }
+
+    for (var coordinate in sitiosSeguros) {
+      sitiosSegurosDistance.add(getDistance(currentLocation, coordinate));
+    }
+
+    var minAlberguesDistance = alberguesDistance
+        .reduce((value, element) => value < element ? value : element);
+    var minSitiosSegurosDistance = sitiosSegurosDistance
+        .reduce((value, element) => value < element ? value : element);
+
+    if (minAlberguesDistance < minSitiosSegurosDistance) {
+      distanceToDestination = minAlberguesDistance;
+      minIndexAlberguesDistance =
+          alberguesDistance.indexOf(distanceToDestination);
+      minAlbergueLatLong = albergues.elementAt(minIndexAlberguesDistance);
+      distanceToNearesPoint = distanceToDestination;
+      return minAlbergueLatLong;
+    }
+    distanceToDestination = minSitiosSegurosDistance;
+    minIndexSitioSeguroDistance =
+        sitiosSegurosDistance.indexOf(distanceToDestination);
+    minSitioSeguroLatLong =
+        sitiosSeguros.elementAt(minIndexSitioSeguroDistance);
+    distanceToNearesPoint = distanceToDestination;
+    return minSitioSeguroLatLong;
   }
 
   void loadCoordinates(MapModel mapModel) {
