@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:csv/csv.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lays/markerdemo-contextmenubuilder.dart';
 import 'package:lays/markerdemo-datastore.dart';
 import 'package:location/location.dart';
@@ -268,7 +270,7 @@ class MapViewPageState2 extends State<MapViewPageHome> {
 
     userMarker.latLong = currentLocation;
     if (currentLocation != null) {
-      nearestPoint = getNearedPoint();
+      nearestPoint = await getNearedPoint();
       MarkerDataStore markerDataStore = MarkerDataStore();
       markerDataStore.addMarker(CircleMarker(
           center: nearestPoint!,
@@ -298,7 +300,7 @@ class MapViewPageState2 extends State<MapViewPageHome> {
     return distance;
   }
 
-  getNearedPoint() {
+  getNearedPoint() async {
     var alberguesDistance = [];
     var sitiosSegurosDistance = [];
     var distanceToDestination;
@@ -307,21 +309,10 @@ class MapViewPageState2 extends State<MapViewPageHome> {
     var minAlbergueLatLong;
     var minSitioSeguroLatLong;
 
-    var albergues = {
-      LatLong(-0.995454, -78.584748),
-      LatLong(-0.995399, -78.586121),
-      LatLong(-0.989938, -78.587724),
-      LatLong(-1.009205, -78.583218),
-      LatLong(-1.003849, -78.595021),
-    };
+    List<List<LatLong>> data = await _loadCSV();
+    var albergues = data[0];
 
-    var sitiosSeguros = {
-      LatLong(-1.004669, -78.576031),
-      LatLong(-0.988080, -78.562158),
-      LatLong(-0.983243, -78.566101),
-      LatLong(-0.976931, -78.583141),
-      LatLong(-1.003781, -78.558963)
-    };
+    var sitiosSeguros = data[1];
     for (var coordinate in albergues) {
       alberguesDistance.add(getDistance(currentLocation, coordinate));
     }
@@ -352,22 +343,11 @@ class MapViewPageState2 extends State<MapViewPageHome> {
     return minSitioSeguroLatLong;
   }
 
-  void loadCoordinates(MapModel mapModel) {
-    var albergues = {
-      LatLong(-0.995454, -78.584748),
-      LatLong(-0.995399, -78.586121),
-      LatLong(-0.989938, -78.587724),
-      LatLong(-1.009205, -78.583218),
-      LatLong(-1.003849, -78.595021),
-    };
+  Future<void> loadCoordinates(MapModel mapModel) async {
+    List<List<LatLong>> data = await _loadCSV();
+    var albergues = data[0];
+    var sitiosSeguros = data[1];
 
-    var sitiosSeguros = {
-      LatLong(-1.004669, -78.576031),
-      LatLong(-0.988080, -78.562158),
-      LatLong(-0.983243, -78.566101),
-      LatLong(-0.976931, -78.583141),
-      LatLong(-1.003781, -78.558963)
-    };
     for (var coordinate in albergues) {
       MarkerDataStore markerDataStore = MarkerDataStore();
       markerDataStore.addMarker(CircleMarker(
@@ -393,6 +373,32 @@ class MapViewPageState2 extends State<MapViewPageHome> {
       ));
       mapModel.markerDataStores.add(markerDataStore);
     }
+  }
+
+  Future<List<List<LatLong>>> _loadCSV() async {
+    final _rawData = await rootBundle.loadString("assets/mycsv.csv");
+    List<List<dynamic>> _listData =
+        const CsvToListConverter().convert(_rawData);
+    var _type = null;
+
+    List<List<LatLong>> _data = [];
+    List<LatLong> _albergues = [];
+    List<LatLong> _sitioSeguro = [];
+    var flag = 0;
+    for (var val in _listData) {
+      if (flag != 0) {
+        _type = val[2];
+        if (_type == "SS") {
+          _sitioSeguro.add(LatLong(val[3], val[4]));
+        } else if (_type == "A") {
+          _albergues.add(LatLong(val[3], val[4]));
+        }
+      }
+      flag = 1;
+    }
+    _data.add(_albergues);
+    _data.add(_sitioSeguro);
+    return _data;
   }
 
   Future<MapModel> _createOnlineMapModel() async {
