@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lays/markerdemo-contextmenubuilder.dart';
 import 'package:lays/markerdemo-datastore.dart';
+import 'package:lays/widgets/my_painter.dart';
 import 'package:location/location.dart';
 //import 'package:lays/rotation-overlay.dart';
 import 'package:mapsforge_flutter/core.dart';
@@ -91,7 +92,8 @@ class MapViewPageState2 extends State<MapViewPageHome> {
   LatLong? nearestPoint;
   late CircleMarker userMarker;
   late double distanceToNearesPoint;
-
+  String? message;
+  Color? messageColor;
   @override
   void initState() {
     super.initState();
@@ -126,10 +128,92 @@ class MapViewPageState2 extends State<MapViewPageHome> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: _buildHead(context) as PreferredSizeWidget,
-      body: _buildMapViewBody(context),
+    return Stack(
+      children: [
+        Scaffold(
+          body: _buildMapViewBody(context),
+        ),
+        Align(
+          alignment: Alignment.topLeft,
+          child: Container(
+            height: 150,
+            margin: EdgeInsets.only(top: 20, left: 5),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.only(top: 30),
+                  width: 200,
+                  child: CustomPaint(
+                    painter: MyPainter("Albergues", Colors.red),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.only(top: 30),
+                  width: 200,
+                  child: CustomPaint(
+                    painter: MyPainter("Sitios Seguros", Colors.green),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.only(top: 30),
+                  width: 200,
+                  child: CustomPaint(
+                    painter: MyPainter("Ubicación actual", Colors.blue),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.only(top: 30),
+                  width: 200,
+                  child: CustomPaint(
+                    painter: MyPainter("Punto más cercano", Colors.black),
+                  ),
+                ),
+              ],
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.all(Radius.circular(3)),
+              border: Border.all(
+                  color: Colors.black, // Set border color
+                  width: 1.0),
+            ),
+          ),
+        ),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Container(
+            height: 50,
+            margin: EdgeInsets.only(bottom: 20),
+            child: Column(
+              children: [_warningMessage()],
+            ),
+            decoration: BoxDecoration(
+              color: messageColor == null ? Colors.white : messageColor,
+              borderRadius: BorderRadius.all(Radius.circular(20)),
+              border: Border.all(
+                  color: Colors.black, // Set border color
+                  width: 1.0),
+            ),
+          ),
+        )
+      ],
     );
+  }
+
+  Widget _warningMessage() {
+    return Container(
+        width: 200,
+        padding: EdgeInsets.all(6),
+        child: Center(
+            child: Text(
+          message == null ? "Cargando" : message!,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+              fontWeight: FontWeight.bold,
+              decoration: TextDecoration.none,
+              fontSize: 14,
+              color: Colors.black),
+        )));
   }
 
   /// Constructs the [AppBar] of the [MapViewPage] page.
@@ -151,19 +235,35 @@ class MapViewPageState2 extends State<MapViewPageHome> {
         currentLocation = model.locationPosition!;
         userMarker.latLong = currentLocation;
         if (distanceToNearesPoint != -1) {
-          var currentDistance = getDistance(nearestPoint!, currentLocation);
-          print("distanceToNearesPoint " + distanceToNearesPoint.toString());
-          print("currentDistance " + currentDistance.toString());
+          double currentDistance = getDistance(nearestPoint!, currentLocation);
+          if (distanceToNearesPoint >= currentDistance) {
+            distanceToNearesPoint = currentDistance;
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+              setState(() {
+                messageColor = Colors.green;
+                message = "Te estas acercando a tu destino: " +
+                    currentDistance.toStringAsFixed(2) +
+                    " m";
+              });
+            });
 
-          if (distanceToNearesPoint > currentDistance) {
-            userMarker.setMarkerCaption(MarkerCaption(
+            /* userMarker.setMarkerCaption(MarkerCaption(
                 text: "Te estas acercando a tu destino",
                 latLong: currentLocation,
-                displayModel: displayModel));
+                displayModel: displayModel)); */
           } else {
-            userMarker.setMarkerCaption(MarkerCaption(
+            WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
+              setState(() {
+                messageColor = Colors.orange;
+                message = "Te estas alejando a tu destino: " +
+                    currentDistance.toStringAsFixed(2) +
+                    " m";
+              });
+            });
+
+            /* userMarker.setMarkerCaption(MarkerCaption(
                 text: "Te estas alejando a tu destino",
-                displayModel: displayModel));
+                displayModel: displayModel)); */
           }
         }
         return MapviewWidget(
