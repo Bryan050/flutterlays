@@ -90,9 +90,11 @@ class MarkerdemoDatastore extends MarkerByItemDataStore {
     setRepaint();
   }
 
-  Future<void> moveMarkerUpdate(MoveAroundEvent event) async {
+  Future<void> moveMarkerUpdate(LatLong location) async {
+    print("moveMarkerUpdate");
+    print(_moveMarker);
     if (_moveMarker == null) return;
-    //_moveMarker!.setLatLong(LatLong(event.latitude, event.longitude));
+    _moveMarker!.latLong = (location);
     setRepaint();
   }
 

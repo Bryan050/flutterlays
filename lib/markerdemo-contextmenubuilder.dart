@@ -54,7 +54,7 @@ class _MarkerdemoContextMenuState extends DefaultContextMenuState {
   @override
   List<Widget> buildColumns(BuildContext context) {
     List<Widget> result = super.buildColumns(context);
-    result.add(MaterialButton(
+    /* result.add(MaterialButton(
       onPressed: () {
         // add a marker to the database
         MarkerdemoDatabase.addToDatabase(widget.event);
@@ -63,11 +63,11 @@ class _MarkerdemoContextMenuState extends DefaultContextMenuState {
         widget.viewModel.clearTapEvent();
       },
       child: const Text("New marker"),
-    ));
+    )); */
 
     widget.mapModel.markerDataStores.forEach((markerDataStore) {
       markerDataStore.isTapped(widget.event).forEach((marker) {
-        result.add(TextButton(
+        /* result.add(TextButton(
             onPressed: () {
               MarkerdemoDatabase.removeFromDatabase(widget.event, marker);
 
@@ -76,7 +76,7 @@ class _MarkerdemoContextMenuState extends DefaultContextMenuState {
             child: const Text(
               'Remove marker',
               style: TextStyle(color: Colors.red),
-            )));
+            ))); */
       });
     });
     return result;

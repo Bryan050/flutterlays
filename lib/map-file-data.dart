@@ -4,8 +4,8 @@ class MapFileData {
   final String fileName;
   final String displayedName;
   final String theme;
-  final double initialPositionLat;
-  final double initialPositionLong;
+  double initialPositionLat;
+  double initialPositionLong;
   final int initialZoomLevel;
   final String? relativePathPrefix;
   final MAPTYPE mapType;
@@ -18,7 +18,7 @@ class MapFileData {
   /// Requires the [indoorZoomOverlay] parameter.
   final Map<int, String>? indoorLevels;
 
-  const MapFileData({
+  MapFileData({
     required this.url,
     required this.fileName,
     required this.displayedName,
