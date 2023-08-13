@@ -10,11 +10,11 @@ class LocationProvider with ChangeNotifier {
   Location? _location;
   Location get location => _location!;
   LatLong? _locationPosition;
-  LatLong get locationPosition => _locationPosition!;
+  LatLong? get locationPosition => _locationPosition;
   bool locationServiceActive = true;
   LocationProvider() {
     _location = Location();
-    _locationPosition = LatLong(-0.94694, -78.61905);
+    _locationPosition = null;
   }
   initalization() async {
     await getUserLocation();

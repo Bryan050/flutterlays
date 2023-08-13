@@ -58,8 +58,8 @@ class LocationHomeState extends State<LocationHome> {
       if (model.locationPosition != null) {
         return Column(
           children: [
-            Text(model.locationPosition.longitude.toString()),
-            Text(model.locationPosition.latitude.toString())
+            Text(model.locationPosition!.longitude.toString()),
+            Text(model.locationPosition!.latitude.toString())
           ],
         );
       }

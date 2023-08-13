@@ -24,7 +24,7 @@ final List<MapFileData> MAP_FILE_DATA_LIST = [
     initialPositionLong: 16.311374,
     initialZoomLevel: 12,
   ), */
-  const MapFileData(
+  MapFileData(
     url: "https://download.mapsforge.org/maps/v5/south-america/ecuador.map",
     fileName: "ecuador.map",
     displayedName: "Ecuador",

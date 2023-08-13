@@ -52,8 +52,8 @@ class MapViewPageState extends State<MapViewPage2> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(
-          create: (context) => LocationProvider(),
+        ChangeNotifierProvider.value(
+          value: LocationProvider(),
           child: MapViewPageHome(mapFileData: mapFileData, mapFile: mapFile),
         )
       ],
@@ -96,6 +96,7 @@ class MapViewPageState2 extends State<MapViewPageHome> {
   void initState() {
     super.initState();
     Provider.of<LocationProvider>(context, listen: false).initalization();
+
     userMarker = CircleMarker(
       center: LatLong(widget.mapFileData.initialPositionLat,
           widget.mapFileData.initialPositionLong),
@@ -147,16 +148,17 @@ class MapViewPageState2 extends State<MapViewPageHome> {
     ) {
       if (model.locationPosition != null) {
         //print("USER CURRENT LOCATION " + model.locationPosition.toString());
-        currentLocation = model.locationPosition;
+        currentLocation = model.locationPosition!;
         userMarker.latLong = currentLocation;
         if (distanceToNearesPoint != -1) {
           var currentDistance = getDistance(nearestPoint!, currentLocation);
-          print(distanceToNearesPoint);
-          print(currentDistance);
+          print("distanceToNearesPoint " + distanceToNearesPoint.toString());
+          print("currentDistance " + currentDistance.toString());
 
           if (distanceToNearesPoint > currentDistance) {
             userMarker.setMarkerCaption(MarkerCaption(
                 text: "Te estas acercando a tu destino",
+                latLong: currentLocation,
                 displayModel: displayModel));
           } else {
             userMarker.setMarkerCaption(MarkerCaption(
@@ -242,15 +244,18 @@ class MapViewPageState2 extends State<MapViewPageHome> {
     /// and now it is similar to online rendering.
 
     /// provide the cache for the tile-bitmaps. In Web-mode we use an in-memory-cache
-    final TileBitmapCache bitmapCache;
-    /*if (kIsWeb) {
-      bitmapCache = await WebTileBitmapCache.create(jobRenderer.getRenderKey());
+    TileBitmapCache? bitmapCache;
+    if (kIsWeb) {
+      bitmapCache = FileTileBitmapCache.create(jobRenderer.getRenderKey())
+          as TileBitmapCache;
     } else {
-      bitmapCache =
-          await FileTileBitmapCache.create(jobRenderer.getRenderKey());
-    }*/
-
-    bitmapCache = await FileTileBitmapCache.create(jobRenderer.getRenderKey());
+      try {
+        bitmapCache =
+            await FileTileBitmapCache.create(jobRenderer.getRenderKey());
+      } catch (e) {
+        bitmapCache = null;
+      }
+    }
 
     /// Now we can glue together and instantiate the mapModel and the viewModel. The former holds the
     /// properties for the map and the latter holds the properties for viewing the map
@@ -269,6 +274,8 @@ class MapViewPageState2 extends State<MapViewPageHome> {
     loadCoordinates(mapModel);
 
     userMarker.latLong = currentLocation;
+    widget.mapFileData.initialPositionLat = currentLocation.latitude;
+    widget.mapFileData.initialPositionLong = currentLocation.longitude;
     if (currentLocation != null) {
       nearestPoint = await getNearedPoint();
       MarkerDataStore markerDataStore = MarkerDataStore();
@@ -283,9 +290,9 @@ class MapViewPageState2 extends State<MapViewPageHome> {
     }
     distanceToNearesPoint = getDistance(nearestPoint!, currentLocation);
     //print("INITIAL DISTANCE: " + distanceToNearesPoint.toString());
-    userMarker.setMarkerCaption(MarkerCaption(
+    /* userMarker.setMarkerCaption(MarkerCaption(
         text: "Distancia total: " + distanceToNearesPoint.toString(),
-        displayModel: displayModel));
+        displayModel: displayModel)); */
 
     markerdemoDatastore.addMarker(userMarker);
     mapModel.markerDataStores.add(markerdemoDatastore);
@@ -311,8 +318,8 @@ class MapViewPageState2 extends State<MapViewPageHome> {
 
     List<List<LatLong>> data = await _loadCSV();
     var albergues = data[0];
-
     var sitiosSeguros = data[1];
+    print(albergues);
     for (var coordinate in albergues) {
       alberguesDistance.add(getDistance(currentLocation, coordinate));
     }
