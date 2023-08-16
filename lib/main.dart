@@ -1,6 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:leak_tracker/leak_tracker.dart';
+import 'package:lays/pages/login_or_register_page.dart';
 import 'package:logging/logging.dart';
 import 'package:lays/map-list.dart';
 
@@ -150,7 +149,19 @@ void main() {
   // enableLeakTracking();
   // MemoryAllocations.instance
   //     .addListener((ObjectEvent event) => dispatchObjectEvent(event.toMap()));
-  runApp(MyApp());
+  runApp(Login());
+}
+
+class Login extends StatelessWidget {
+  const Login({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: LoginOrRegisterPage(),
+    );
+  }
 }
 
 /// This is the entry point, the main application widget.
