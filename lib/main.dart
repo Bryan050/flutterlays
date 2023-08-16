@@ -1,262 +1,182 @@
-import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:leak_tracker/leak_tracker.dart';
-import 'package:logging/logging.dart';
-import 'package:lays/map-list.dart';
+import 'package:lays/models/zona.dart';
 
-import 'map-file-data.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
 
-/// The global variable that holds a list of map files.
-///
-/// Data can be files with distinct places as [MapFileData]
-/// or parts of a huge and extensible area as [MapFileData.online].
-// ignore: non_constant_identifier_names
-final List<MapFileData> MAP_FILE_DATA_LIST = [
-  /* new MapFileData.online(
-    displayedName: "Online Austria (Supports web)",
-    initialPositionLat: 48.089415,
-    initialPositionLong: 16.311374,
-    initialZoomLevel: 12,
-  ),
-  new MapFileData.onlineSatellite(
-    displayedName: "Online Austria Satellite (Supports web)",
-    initialPositionLat: 48.089415,
-    initialPositionLong: 16.311374,
-    initialZoomLevel: 12,
-  ), */
-  MapFileData(
-    url: "https://download.mapsforge.org/maps/v5/south-america/ecuador.map",
-    fileName: "ecuador.map",
-    displayedName: "Ecuador",
-    initialPositionLat: -0.94694,
-    initialPositionLong: -78.61905,
-    initialZoomLevel: 18,
-    indoorZoomOverlay: true,
-    indoorLevels: {0: 'EG'},
-  ),
-  /* const MapFileData(
-    url: "https://dailyflightbuddy.com/mapsforge_examples/Louvre.map",
-    fileName: "Louvre.map",
-    displayedName: "Paris - Louvre (Indoor)",
-    initialPositionLat: 48.86085,
-    initialPositionLong: 2.33665,
-    indoorZoomOverlay: true,
-    indoorLevels: {2: '2', 1: '1', 0: '0', -1: '-1', -2: '-2', -3: '-3'},
-  ),
-  const MapFileData(
-    url: "https://dailyflightbuddy.com/mapsforge_examples/ile-de-france.map",
-    fileName: "ile-de-france.map",
-    displayedName: "ile-de-france",
-    initialPositionLat: 48.86085,
-    initialPositionLong: 2.33665,
-  ),
-  // const MapFileData(
-  //   url:
-  //       "https://dailyflightbuddy.com/mapsforge_examples/Meadowhall Shopping Center.map",
-  //   fileName: "Meadowhall Shopping Center.map",
-  //   displayedName: "Meadowhall Shopping Center (Indoor)",
-  //   initialPositionLat: 53.41388,
-  //   initialPositionLong: -1.41063,
-  //   indoorZoomOverlay: true,
-  //   indoorLevels: {1: 'OG', 0: 'EG'},
-  // ),
-  // const MapFileData(
-  //   url:
-  //       "https://dailyflightbuddy.com/mapsforge_examples/Northglenn High School.map",
-  //   fileName: "Northglenn High School.map",
-  //   displayedName: "Northglenn High School (Indoor)",
-  //   initialPositionLat: 39.88039,
-  //   initialPositionLong: -104.99388,
-  //   indoorZoomOverlay: true,
-  //   indoorLevels: {1: 'OG', 0: 'EG'},
-  // ),
-  const MapFileData(
-    url: "https://dailyflightbuddy.com/mapsforge_examples/sachsen.map",
-    fileName: "sachsen.map",
-    displayedName: "Offline Saxony",
-    theme: "assets/render_themes/defaultrender.xml",
-    initialPositionLat: 50.81287701030895,
-    initialPositionLong: 12.94189453125,
-    initialZoomLevel: 12,
-  ),
-  const MapFileData(
-    url: "https://dailyflightbuddy.com/mapsforge_examples/austria.map",
-    fileName: "austria.map",
-    displayedName: "Offline Austria",
-    theme: "assets/render_themes/defaultrender.xml",
-    initialPositionLat: 48.089415,
-    initialPositionLong: 16.311374,
-    initialZoomLevel: 12,
-  ),
-  const MapFileData(
-    url: "https://dailyflightbuddy.com/mapsforge_examples/austria.map",
-    fileName: "austria.map",
-    displayedName: "Offline Austria Dark mode",
-    theme: "assets/render_themes/darkrender.xml",
-    initialPositionLat: 48.089415,
-    initialPositionLong: 16.311374,
-    initialZoomLevel: 12,
-  ),
-  const MapFileData(
-    url: "https://dailyflightbuddy.com/mapsforge_examples/monaco.map",
-    fileName: "monaco.map",
-    displayedName: "Offline Monaco (Supports web)",
-    theme: "assets/render_themes/defaultrender.xml",
-    initialPositionLat: 43.7399,
-    initialPositionLong: 7.4262,
-    initialZoomLevel: 15,
-  ),
-  const MapFileData(
-    url: "https://dailyflightbuddy.com/mapsforge_examples/sicilia_oam.zip",
-    fileName:
-        "sicilia_oam.map", // will automatically unzipped if the extension of the destination is not .zip
-    displayedName: "Contour Sizilia",
-    theme: "assets/render_themes/sicilia_oam.xml",
-    relativePathPrefix: "sicilia_oam/",
-    initialPositionLat: 37.5,
-    initialPositionLong: 14.3,
-    initialZoomLevel: 15,
-  ),
-  const MapFileData(
-    url: "https://dailyflightbuddy.com/mapsforge_examples/world.map",
-    fileName: "world.map",
-    displayedName: "Worldmap",
-    theme: "assets/render_themes/defaultrender.xml",
-    initialPositionLat: 43.7399,
-    initialPositionLong: 7.4262,
-    initialZoomLevel: 5,
-  ), */
-  // const MapFileData(
-  //   url: "https://dailyflightbuddy.com/mapsforge_examples/world.map",
-  //   fileName: "world.map",
-  //   displayedName: "Worldmap Dark mode",
-  //   theme: "assets/render_themes/darkrender.xml",
-  //   initialPositionLat: 43.7399,
-  //   initialPositionLong: 7.4262,
-  //   initialZoomLevel: 5,
-  // ),
-  /* const MapFileData(
-    url: "https://dailyflightbuddy.com/mapsforge_examples/berlin.map",
-    fileName: "berlin.map",
-    displayedName: "Berlin with original mapsforge theme",
-    theme: "assets/render_themes/mapsforge_default.xml",
-    initialPositionLat: 52.52278,
-    initialPositionLong: 13.38982,
-    initialZoomLevel: 17,
-  ), */
-];
+void main() => runApp(const MyApp());
 
-void main() {
-  // enableLeakTracking();
-  // MemoryAllocations.instance
-  //     .addListener((ObjectEvent event) => dispatchObjectEvent(event.toMap()));
-  runApp(MyApp());
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
 }
 
-/// This is the entry point, the main application widget.
-class MyApp extends StatelessWidget {
-  MyApp() {
-    _initLogging();
+class _MyAppState extends State<MyApp> {
+  late Future<List<Zona>> _zoneList;
+  late Future<String> _zoneListString;
+  late bool _hasConnection;
+  final String apiString = "http://192.168.100.19:3000/api/albergue";
+  Future<void> _checkConnectivity() async {
+    try {
+      final response = await http.get(Uri.parse(apiString));
+      setState(() {
+        _hasConnection = response.statusCode == 200;
+      });
+
+      if (_hasConnection) {
+        // Hay conexión a Internet
+        _performOnlineAction();
+      } else {
+        // No hay conexión a Internet
+        _performOfflineAction();
+      }
+    } catch (e) {
+      // Ocurrió un error al intentar realizar la solicitud
+      _performOfflineAction();
+    }
+  }
+
+  void _performOnlineAction() {
+    Future<List<Zona>> _APIZones = _getZonesFromAPI();
+    _generateAndSaveCSV(_APIZones);
+    _zoneList = _APIZones;
+    _zoneListString = readFileFromInternalStorage();
+    print('Hay conexión a Internet');
+  }
+
+  void _performOfflineAction() {
+    _zoneListString = readFileFromInternalStorage();
+    print('No hay conexión a Internet');
+  }
+
+  Future<List<Zona>> _getZonesFromAPI() async {
+    final response = await http.get(Uri.parse(apiString));
+    List<Zona> zones = [];
+    if (response.statusCode == 200) {
+      String body = utf8.decode(response.bodyBytes);
+      final jsonData = jsonDecode(body);
+      jsonData.asMap().forEach((index, item) {
+        zones.add(Zona(
+            id: index + 1,
+            nombre: item["nombre"],
+            tipo: item["tipo"],
+            cx: double.parse(item["cx"].toString()),
+            cy: double.parse(item["cy"].toString())));
+      });
+      return zones;
+    } else {
+      throw Exception("Error en la conexión");
+    }
+  }
+
+  Future<void> _generateAndSaveCSV(Future<List<Zona>> Futuredata) async {
+    List<Zona> data = await Futuredata;
+    final csvData = data.map((zona) {
+      return [
+        zona.id,
+        zona.nombre,
+        zona.tipo,
+        zona.cx.toString(),
+        zona.cy.toString(),
+      ].join(',');
+    }).join('\n');
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File(
+        '${directory.path}/zoneData.csv'); // Ruta donde deseas guardar el archivo
+    await file.writeAsString(csvData);
+  }
+
+  Future<String> readFileFromInternalStorage() async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/zoneData.csv');
+
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        return content;
+      } else {
+        print('El archivo no existe.');
+        return '';
+      }
+    } catch (e) {
+      print('Error al leer el archivo: $e');
+      return '';
+    }
+  }
+
+  Widget csvContainer() {
+    return FutureBuilder<String>(
+      future: _zoneListString,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          final csvLines = snapshot.data!.split('\n');
+          return ListView.builder(
+            itemCount: csvLines.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(csvLines[index]),
+              );
+            },
+          );
+        } else if (snapshot.hasError) {
+          return const Text('Error al leer el archivo.');
+        }
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+  }
+
+  Widget nameList() {
+    return FutureBuilder(
+      future: _zoneList,
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          return ListView(
+            children: _listZone(snapshot.data),
+          );
+        } else if (snapshot.hasError) {
+          print(snapshot.error);
+          return const Text("Error");
+        }
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _zoneListString = readFileFromInternalStorage();
+    _checkConnectivity();
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Mapsforge Example App',
-      home: MapList(MAP_FILE_DATA_LIST),
+      title: 'Material App',
+      home: Scaffold(
+          appBar: AppBar(
+            title: const Text('Material App Bar'),
+          ),
+          body: csvContainer()),
     );
   }
 
-  /// Sets a [Logger] to log debug messages.
-  void _initLogging() {
-    // Print output to console.
-    Logger.root.onRecord.listen((LogRecord r) {
-      print('${r.time}\t${r.loggerName}\t[${r.level.name}]:\t${r.message}');
-    });
-
-    // Root logger level.
-    Logger.root.level = Level.FINEST;
+  List<Widget> _listZone(List<Zona>? data) {
+    List<Widget> zones = [];
+    for (var zona in data!) {
+      zones.add(Text(zona.nombre));
+    }
+    return zones;
   }
 }
-
-/* 
-import 'dart:io';
-import 'package:flutter/material.dart';
-import 'package:csv/csv.dart';
-import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: HomePage(),
-    );
-  }
-}
-
-class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
-
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  List<List<dynamic>> _data = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadCSV();
-  }
-
-  void _loadCSV() async {
-    final _rawData = await rootBundle.loadString("assets/mycsv.csv");
-    List<List<dynamic>> _listData =
-        const CsvToListConverter().convert(_rawData);
-    setState(() {
-      _data = _listData;
-      print(_data);
-      for (var val in _data) {
-        print(val[2]);
-        print(val[3]);
-        print(val[4]);
-      }
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text("dbestech"),
-      ),
-      body: ListView.builder(
-        itemCount: _data.length,
-        itemBuilder: (_, index) {
-          return Card(
-            margin: const EdgeInsets.all(3),
-            color: index == 0 ? Colors.amber : Colors.white,
-            child: ListTile(
-              leading: Text(_data[index][0].toString()),
-              title: Text(_data[index][1]),
-              trailing: Text(_data[index][2].toString()),
-            ),
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-          child: const Icon(Icons.add), onPressed: _loadCSV),
-      // Display the contents from the CSV file
-    );
-  }
-}
- */
