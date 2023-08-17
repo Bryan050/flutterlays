@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:lays/map_data.dart';
 import 'package:lays/pages/QR_page.dart';
 
 import '../components/my_textfield.dart';
 import '../components/my_button.dart';
 import '../map-download-page.dart';
 import '../map-file-data.dart';
-import '../map-list.dart';
 import '../map-view-page2.dart';
 
 final List<MapFileData> MAP_FILE_DATA_LIST = [
@@ -36,9 +36,18 @@ class _LoginPageState extends State<LoginPage> {
 
   //sign user in method
   void signUserIn() async {
-    print("signUserIn");
+    await displayMap();
+  }
+
+  Future<void> displayMap() async {
+    var zoneListString = await MapData().zoneListString;
+    print("displayMAP");
+    print(zoneListString);
+    print("zoneListString LISTED");
+
     for (var element in MAP_FILE_DATA_LIST) {
       if (element.mapType != MAPTYPE.OFFLINE) {
+        // ignore: use_build_context_synchronously
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (BuildContext context) =>
@@ -46,6 +55,7 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
       } else {
+        // ignore: use_build_context_synchronously
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (BuildContext context) =>

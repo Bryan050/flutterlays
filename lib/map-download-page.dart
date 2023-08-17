@@ -1,16 +1,12 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:leak_tracker/devtools_integration.dart';
-import 'package:leak_tracker/leak_tracker.dart';
 import 'package:lays/filemgr.dart';
 import 'package:lays/map-view-page2.dart';
 import 'package:lays/pathhandler.dart';
 import 'package:mapsforge_flutter/maps.dart';
 
-import 'location_page.dart';
 import 'map-file-data.dart';
 
 /// The [StatefulWidget] which downloads the mapfile.

@@ -1,9 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:location/location.dart';
-import 'package:geocoding/geocoding.dart' as goa;
 import 'package:mapsforge_flutter/core.dart';
 
 class LocationProvider with ChangeNotifier {
@@ -38,7 +34,7 @@ class LocationProvider with ChangeNotifier {
     location.onLocationChanged.listen((LocationData currentLocation) {
       _locationPosition =
           LatLong(currentLocation.latitude!, currentLocation.longitude!);
-      print(_locationPosition);
+      //print(_locationPosition);
       notifyListeners();
     });
   }

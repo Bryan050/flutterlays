@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:csv/csv.dart';
 import 'package:flutter/foundation.dart';
@@ -8,7 +7,6 @@ import 'package:flutter/services.dart';
 import 'package:lays/markerdemo-contextmenubuilder.dart';
 import 'package:lays/markerdemo-datastore.dart';
 import 'package:lays/widgets/my_painter.dart';
-import 'package:location/location.dart';
 //import 'package:lays/rotation-overlay.dart';
 import 'package:mapsforge_flutter/core.dart';
 import 'package:mapsforge_flutter/datastore.dart';
@@ -136,7 +134,7 @@ class MapViewPageState2 extends State<MapViewPageHome> {
         Align(
           alignment: Alignment.topLeft,
           child: Container(
-            height: 150,
+            height: 185,
             margin: EdgeInsets.only(top: 20, left: 5),
             child: Column(
               children: [
@@ -166,6 +164,13 @@ class MapViewPageState2 extends State<MapViewPageHome> {
                   width: 200,
                   child: CustomPaint(
                     painter: MyPainter("Punto más cercano", Colors.black),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.only(top: 30),
+                  width: 200,
+                  child: CustomPaint(
+                    painter: MyPainter("Fuentes de agua", Color(0xff29bbfe)),
                   ),
                 ),
               ],
@@ -419,7 +424,7 @@ class MapViewPageState2 extends State<MapViewPageHome> {
     List<List<LatLong>> data = await _loadCSV();
     var albergues = data[0];
     var sitiosSeguros = data[1];
-    print(albergues);
+    //print(albergues);
     for (var coordinate in albergues) {
       alberguesDistance.add(getDistance(currentLocation, coordinate));
     }
@@ -454,6 +459,7 @@ class MapViewPageState2 extends State<MapViewPageHome> {
     List<List<LatLong>> data = await _loadCSV();
     var albergues = data[0];
     var sitiosSeguros = data[1];
+    var fuentesAgua = data[2];
 
     for (var coordinate in albergues) {
       MarkerDataStore markerDataStore = MarkerDataStore();
@@ -480,32 +486,48 @@ class MapViewPageState2 extends State<MapViewPageHome> {
       ));
       mapModel.markerDataStores.add(markerDataStore);
     }
+
+    for (var coordinate in fuentesAgua) {
+      MarkerDataStore markerDataStore = MarkerDataStore();
+      markerDataStore.addMarker(CircleMarker(
+        center: coordinate,
+        radius: 15,
+        strokeWidth: 2,
+        fillColor: 0xff29bbfe,
+        strokeColor: 0xff000000,
+        displayModel: displayModel,
+      ));
+      mapModel.markerDataStores.add(markerDataStore);
+    }
   }
 
   Future<List<List<LatLong>>> _loadCSV() async {
-    final _rawData = await rootBundle.loadString("assets/mycsv.csv");
-    List<List<dynamic>> _listData =
-        const CsvToListConverter().convert(_rawData);
-    var _type = null;
+    final rawData = await rootBundle.loadString("assets/mycsv.csv");
+    List<List<dynamic>> listData = const CsvToListConverter().convert(rawData);
+    var type = null;
 
-    List<List<LatLong>> _data = [];
-    List<LatLong> _albergues = [];
-    List<LatLong> _sitioSeguro = [];
+    List<List<LatLong>> data = [];
+    List<LatLong> albergues = [];
+    List<LatLong> sitioSeguro = [];
+    List<LatLong> fuentesAgua = [];
     var flag = 0;
-    for (var val in _listData) {
+    for (var val in listData) {
       if (flag != 0) {
-        _type = val[2];
-        if (_type == "SS") {
-          _sitioSeguro.add(LatLong(val[3], val[4]));
-        } else if (_type == "A") {
-          _albergues.add(LatLong(val[3], val[4]));
+        type = val[2];
+        if (type == "SS") {
+          sitioSeguro.add(LatLong(val[3], val[4]));
+        } else if (type == "A") {
+          albergues.add(LatLong(val[3], val[4]));
+        } else if (type == "FA") {
+          fuentesAgua.add(LatLong(val[3], val[4]));
         }
       }
       flag = 1;
     }
-    _data.add(_albergues);
-    _data.add(_sitioSeguro);
-    return _data;
+    data.add(albergues);
+    data.add(sitioSeguro);
+    data.add(fuentesAgua);
+    return data;
   }
 
   Future<MapModel> _createOnlineMapModel() async {

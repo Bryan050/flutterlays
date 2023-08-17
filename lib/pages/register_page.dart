@@ -1,6 +1,5 @@
 import 'package:lays/components/my_button.dart';
 import 'package:lays/components/my_textfield.dart';
-import 'package:lays/components/square_tile.dart';
 import 'package:flutter/material.dart';
 
 class RegisterPage extends StatefulWidget {
